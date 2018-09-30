@@ -16,25 +16,33 @@ defmodule Gossip do
     pid
   end
 
-  def push(parent, pid, network, next) do
+  def push(pid, parent, network, next) do
     GenServer.cast(pid, {:push, parent, network, next})
   end
 
   def init(state) do
-    # runs in the server context 🐨Bob
     {:ok, state}
   end
 
-  def handle_cast({:push, parent, network, next}, state) do
+  def loop(parent, network, next) do
     pid = next.(self(), network)
-    push(parent, pid, network, next)
+    if pid == self() do
+      :ok
+    else
+      push(pid, parent, network, next)
+      loop(parent, network, next)
+    end
+  end
+
+  def handle_cast({:push, parent, network, next}, state) do
     cond do
-      state+1 == 100 -> 
-        Process.exit(self(), :normal)
-      state+1 == 1  -> 
-        send(parent, {:CHECK, self()}) 
+      state+1 == 1 ->
+        send(parent, {:CHECK, self()})
+        loop(parent, network, next)
         {:noreply, state+1}
-      true -> 
+      state+1 >= 10 ->
+        {:noreply, state}
+      true ->
         {:noreply, state+1}
     end
   end
