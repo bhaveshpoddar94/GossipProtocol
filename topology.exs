@@ -21,10 +21,14 @@ end
 defmodule Random do
   def create(actor_list) do
     n = length(actor_list)
-    idx_actor = Enum.map(0..n-1, fn i -> [{:rand.uniform, :rand.uniform}, Enum.at(actor_list, i)] end)
+    idx_actor = Enum.map(0..n-1, fn i -> [{rand(), rand()}, Enum.at(actor_list, i)] end)
     Enum.map(idx_actor, fn [i1, pid1] -> neighbors = get_neighbors(i1, idx_actor)
         {pid1, neighbors} end)
       |> Enum.into(%{})
+  end
+
+  defp rand do
+    :rand.uniform
   end
 
   defp get_neighbors(i1, idx_actor) do
@@ -36,11 +40,11 @@ defmodule Random do
     diff_x = abs(:math.pow(x1, 2) - :math.pow(x2, 2))
     diff_y = abs(:math.pow(y1, 2) - :math.pow(y2, 2))
     distance = :math.sqrt(diff_x + diff_y)
-    if distance > 0.0 && distance < 0.6 do
+    if distance > 0.0 && distance < 0.1 do
       true
     else
       false
-    end 
+    end
   end
 end
 

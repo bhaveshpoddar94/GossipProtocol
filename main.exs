@@ -3,15 +3,9 @@ defmodule Parent do
   Code.require_file("algorithm.exs")
 
   def init(numNodes, topology\\"full", algorithm\\"gossip") do
-    #round numNodes
-    numNodes = 
-      cond do 
-        topology == "rand2D" || topology == "torus" -> 
-          round(:math.pow(:math.ceil(:math.sqrt(numNodes)),2))
-        topology == "3D" -> 
-          round(:math.pow(:math.ceil(:math.pow(numNodes, 0.33)),3))
-        true -> numNodes
-      end
+    #adjust numNodes
+    numNodes = adjust_numNodes(topology, numNodes)
+    IO.inspect numNodes
 
     #spawn actors
     actor_list = create_network(numNodes, algorithm)
@@ -36,6 +30,16 @@ defmodule Parent do
     IO.puts "Time elapsed: #{exec_time} miliseconds"
   end
 
+  defp adjust_numNodes(topology, numNodes) do
+    cond do 
+      topology == "torus" -> 
+        round(:math.pow(:math.ceil(:math.sqrt(numNodes)),2))
+      topology == "3D" -> 
+        round(:math.pow(:math.ceil(:math.pow(numNodes, 0.33)),3))
+      true -> numNodes
+    end
+  end
+
   defp create_network(numNodes, algorithm) do
     case algorithm do
       "gossip"  -> Enum.map(1..numNodes, fn _x -> Gossip.start_link(0) end)
@@ -47,10 +51,12 @@ defmodule Parent do
   def loop(numNodes) do
     receive do
       {:CHECK, pid, value} ->
-        IO.puts "Actor #{inspect value} got the rumour"
+        IO.inspect numNodes
         loop(numNodes-1)
     end
   end
 end
 
-Parent.init(300, "3D", "pushsum")
+args = System.argv()
+IO.inspect args
+Parent.init(10000, "rand2D", "gossip")
