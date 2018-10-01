@@ -3,33 +3,29 @@ defmodule Parent do
   Code.require_file("algorithm.exs")
 
   def init(numNodes, topology\\"full", algorithm\\"gossip") do
-    Process.flag :trap_exit, true
-
     #round numNodes
     numNodes = 
-      case topology do
-        "3D"     -> get_Numnodes_for_3D()
-        "rand2D" -> get_Numnodes_for_2D()
-        "torus"  -> get_Numnodes_for_2D()
-        _        -> numNodes
+      if topology == "rand2D" || topology == "torus" do 
+        round(:math.pow(:math.ceil(:math.sqrt(numNodes)),2))
+      else
+        numNodes
       end
 
     #spawn actors
-    network = create_network(numNodes, algorithm)
+    actor_list = create_network(numNodes, algorithm)
 
-    # setup topology and get the next method
-    next = Topology.create(topology, network)
-    
-    # get push method from respective algorithm
+    # setup topology and get the adjacency list
+    network = Topology.create(topology, actor_list)
+
+    # get push method from the respective algorithm
     push = Algorithm.get_push_method(algorithm)
     
-    # fetch a random actor
-    rand = :rand.uniform(numNodes)
-    pid  = Enum.at(network, rand)
+    # select a random actor
+    random_actor = Enum.random(actor_list)
 
     # time the protocol
     start_time = Time.utc_now()
-    push.(pid, self(), network, next)
+    push.(random_actor, self(), network)
     loop(numNodes)
     end_time = Time.utc_now()
     
@@ -41,30 +37,18 @@ defmodule Parent do
   defp create_network(numNodes, algorithm) do
     case algorithm do
       "gossip"  -> Enum.map(1..numNodes, fn _x -> Gossip.start_link(0) end)
-      "pushsum" -> Enum.map(1..numNodes, fn _x -> PushSum.start_link(%{}) end)
+      "pushsum" -> Enum.map(1..numNodes, fn x -> PushSum.start_link({0, x/1, 1.0}) end)
     end
-  end
-
-  defp get_Numnodes_for_2D(n) do
-    root = :math.sqrt(n)
-    decimal_part = root - trunc(root)
-    if decimal_part > 0.5 do
-      root = root + 1
-    end
-    :math.pow(root, 2) |> round
   end
   
-  def loop(0), do: Process.exit(self(), :normal)
+  def loop(0), do: :ok
   def loop(numNodes) do
     receive do
-      {:EXIT, pid, _} ->
-        IO.puts "Parent got message: #{inspect pid }"
-        loop(numNodes)
-      {:CHECK, pid} ->
-        IO.puts "Actor #{inspect pid} got the rumour"
+      {:CHECK, pid, value} ->
+        IO.puts "Actor #{inspect value} got the rumour"
         loop(numNodes-1)
     end
   end
 end
 
-Parent.init(100)
+Parent.init(900, "imp2D", "gossip")
