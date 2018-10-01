@@ -5,10 +5,12 @@ defmodule Parent do
   def init(numNodes, topology\\"full", algorithm\\"gossip") do
     #round numNodes
     numNodes = 
-      if topology == "rand2D" || topology == "torus" do 
-        round(:math.pow(:math.ceil(:math.sqrt(numNodes)),2))
-      else
-        numNodes
+      cond do 
+        topology == "rand2D" || topology == "torus" -> 
+          round(:math.pow(:math.ceil(:math.sqrt(numNodes)),2))
+        topology == "3D" -> 
+          round(:math.pow(:math.ceil(:math.pow(numNodes, 0.33)),3))
+        true -> numNodes
       end
 
     #spawn actors
@@ -51,4 +53,4 @@ defmodule Parent do
   end
 end
 
-Parent.init(900, "imp2D", "gossip")
+Parent.init(300, "3D", "pushsum")
