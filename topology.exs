@@ -40,7 +40,7 @@ defmodule Random do
     diff_x = abs(:math.pow(x1, 2) - :math.pow(x2, 2))
     diff_y = abs(:math.pow(y1, 2) - :math.pow(y2, 2))
     distance = :math.sqrt(diff_x + diff_y)
-    if distance > 0.0 && distance < 0.1 do
+    if distance > 0.0 && distance <= 0.3 do
       true
     else
       false

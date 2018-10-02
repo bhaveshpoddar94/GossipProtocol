@@ -5,7 +5,6 @@ defmodule Parent do
   def init(numNodes, topology\\"full", algorithm\\"gossip") do
     #adjust numNodes
     numNodes = adjust_numNodes(topology, numNodes)
-    IO.inspect numNodes
 
     #spawn actors
     actor_list = create_network(numNodes, algorithm)
@@ -50,13 +49,16 @@ defmodule Parent do
   def loop(0), do: :ok
   def loop(numNodes) do
     receive do
-      {:CHECK, pid, value} ->
-        IO.inspect numNodes
+      {:CHECK, _pid, _value} ->
         loop(numNodes-1)
     end
   end
 end
 
 args = System.argv()
-IO.inspect args
-Parent.init(10000, "rand2D", "gossip")
+cond do 
+  length(args) < 3 -> IO.puts "Wrong number of inputs"
+  length(args) > 3 -> IO.puts "Wrong number of inputs"
+  true             -> [numNodes, topology, algorithm] = args
+  					  Parent.init(String.to_integer(numNodes), topology, algorithm)
+end
